@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/btnSwitchModel"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="@android:color/transparent"
+    android:src="@android:drawable/ic_menu_preferences"
+    android:scaleType="centerInside" />
