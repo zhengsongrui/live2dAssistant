@@ -62,4 +62,8 @@ router.get("/asrText", async (req, res) => {
     res.status(500).send("ASR server error");
   }
 });
+router.get("/test", async (req, res) => {
+  
+    res.send('成功');
+});
 export default router;
