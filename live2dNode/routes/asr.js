@@ -11,6 +11,7 @@ const router = express.Router();
 
 const TEMP_DIR = path.resolve("temp");
 
+// 语音解析识别对话接口
 router.post("/asr", async (req, res) => {
   try {
     const audioBuffer = req.body;
@@ -42,10 +43,12 @@ router.post("/asr", async (req, res) => {
     res.status(500).send("ASR server error");
   }
 });
+
+// 文字对话测试接口
 router.get("/asrText", async (req, res) => {
   try {
   
-    const userText = '你好'
+    const userText = req.query.text || '你好';
     console.log("用户说:" + userText);
 
     // 2️⃣ GPT 对话
