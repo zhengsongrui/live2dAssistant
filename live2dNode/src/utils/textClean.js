@@ -1,3 +1,9 @@
+/**
+ * 清理大模型输出的文本：
+ * - 删除 <think>...</think> 思维链
+ * - 删除多余的中英文括号内容
+ * - 压缩多空行
+ */
 export function cleanOutput(text) {
   if (!text) return "";
   return text
