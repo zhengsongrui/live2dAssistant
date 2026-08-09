@@ -19,7 +19,7 @@ export async function handleAsr(req, res) {
       fs.mkdirSync(TEMP_DIR, { recursive: true });
     }
 
-    const fileName = `${Date.now()}-${crypto.randomUUID()}.wav`;
+    const fileName = `${Date.now()}-${crypto.randomUUID()}.mp3`;
     const audioPath = path.join(TEMP_DIR, fileName);
 
     fs.writeFileSync(audioPath, audioBuffer);

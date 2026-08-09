@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import asrRouter from "./routes/asr.routes.js";
 import chatRouter from "./routes/chat.routes.js";
+import ttsRouter from "./routes/tts.routes.js";
+import voiceRouter from "./routes/voice.routes.js";
 
 const app = express();
 
@@ -15,8 +17,8 @@ app.use(
   })
 );
 
-// 接收 raw audio（wav）
-app.use(express.raw({ type: "audio/wav", limit: "100mb" }));
+// 接收 raw audio（mp3）
+app.use(express.raw({ type: "audio/mp3", limit: "100mb" }));
 
 // 解析 JSON 请求体
 app.use(express.json());
@@ -24,5 +26,7 @@ app.use(express.json());
 // 挂载路由
 app.use(asrRouter);
 app.use(chatRouter);
+app.use(ttsRouter);
+app.use(voiceRouter);
 
 export default app;
