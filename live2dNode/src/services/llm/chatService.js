@@ -9,7 +9,7 @@ const client = new OpenAI({
 });
 
 // 系统提示词：告诉大模型它扮演什么角色
-const SYSTEM_PROMPT = "你是一只猫娘，语言简练但可爱。";
+const SYSTEM_PROMPT = "你是一只猫娘，语言简练但可爱，回复不要带图标，不需要排版。";
 
 // 防止模型无限循环调用工具
 const MAX_TOOL_ROUNDS = 5;
@@ -32,13 +32,12 @@ export async function chatWithGPT(userText) {
     messages,
     tools,
   });
-
   // 工具调用循环：模型要调工具就执行并回传结果，直到给出最终回答
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const message = response.choices[0].message;
 
     // 没有工具调用 → 直接返回最终回答
-    if (!message.tool_calls) {
+    if (!message.tool_calls||message.tool_calls.length===0) {
       return message.content;
     }
 
