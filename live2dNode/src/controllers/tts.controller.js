@@ -1,4 +1,5 @@
 import { synthesize } from "../services/tts/f5TtsService.js";
+import { synthesizeEmotion } from "../services/tts/emotionTtsService.js";
 
 /**
  * 处理 POST /tts 文本合成语音接口：
@@ -14,6 +15,43 @@ export async function handleTts(req, res) {
     res.send(audio);
   } catch (err) {
     console.error("TTS 合成失败:", err);
+    res.status(500).send("TTS server error");
+  }
+}
+
+/**
+ * 处理 POST /tts/emotion 语气语音合成接口：
+ * 请求体 JSON 接收 text 及可选参数（voice/speed/seed/removeSilence/format/bitrate）
+ * 及情感控制参数（emotionMode/emoAudioPrompt/emoAlpha/emoVector/emoText），
+ * 除 text 外其余字段扁平直传给 synthesizeEmotion（对齐 emotionTtsService.js 的签名解构）
+ */
+export async function handleEmotionTts(req, res) {
+  const { text, ...params } = req.body ?? {};
+  if (!text) return res.status(400).send("缺少 text 参数");
+  try {
+    const { audio, contentType } = await synthesizeEmotion(text, params);
+    res.set("Content-Type", contentType);
+    res.send(audio);
+  } catch (err) {
+    console.error("语气语音合成失败:", err);
+    res.status(500).send("TTS server error");
+  }
+}
+
+/**
+ * 处理 GET /tts/emotion 语气语音合成接口（浏览器测试用）：
+ * 仅需 url 的 text 参数，其余参数使用默认值。
+ */
+export async function handleEmotionTtsGet(req, res) {
+  const { text } = req.query ?? {};
+  if (!text) return res.status(400).send("缺少 text 参数");
+  try {
+    const { audio, contentType } = await synthesizeEmotion(text);
+    res.set("Content-Type", contentType);
+    res.set("Content-Disposition", 'inline; filename="emotion-tts.mp3"');
+    res.send(audio);
+  } catch (err) {
+    console.error("语气语音合成失败:", err);
     res.status(500).send("TTS server error");
   }
 }
