@@ -45,6 +45,9 @@ npm start              # 或 npm run dev（热重载）
 | POST | `/asrVoice` | 语音 → 识别 → 回复 → 语音，body 为原始音频，返回 mp3 |
 | POST | `/tts` | 文本合成语音（JSON），返回 mp3 |
 | GET | `/tts?text=` | 合成语音（浏览器测试），返回 mp3 |
+| POST | `/novel-tts` | 完整链路：小说文本 → 角色/情感识别 → 分段情感语音 → FFmpeg 合并，返回音频 |
+| POST | `/novel/analyze` | 情感分析：小说文本 → LLM 角色/情感识别，返回 JSON segments |
+| POST | `/novel/tts` | 情感结果转语音：JSON segments → 分段情感 TTS → FFmpeg 合并，返回音频 |
 | GET | `/test` | 健康检查，返回「成功」 |
 
 ### TTS 参数（`/tts`）
@@ -74,7 +77,36 @@ curl "http://localhost:8999/tts?text=你好世界" -o out.mp3
 
 # 文字对话 + 语音
 curl "http://localhost:8999/chatVoice?text=今天天气怎么样" -o reply.mp3
+
+# 小说接口①完整链路：LLM 识别 + 分段情感 TTS + FFmpeg 合并
+curl -X POST http://localhost:8999/novel-tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"小说全文……","roles":["小明","老师"],"format":"mp3"}' -o novel.mp3
+
+# 小说接口②情感分析：返回 JSON segments（role/text/emotion）
+curl -X POST http://localhost:8999/novel/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text":"小说全文……","roles":["小明","老师"]}'
+
+# 小说接口③情感结果转语音：把②返回的 segments 转成音频
+curl -X POST http://localhost:8999/novel/tts \
+  -H "Content-Type: application/json" \
+  -d '{"segments":[{"role":"旁白","text":"窗外下着雨。","emotion":"平静地叙述"},{"role":"小明","text":"我们出发吧！","emotion":"兴奋地说"}],"format":"mp3"}' -o novel.mp3
 ```
+
+### 小说接口说明
+
+三个接口共用一套流程：**LLM 角色/情感识别切分段落 → 每段用「文本情感」方式（方式 3）情感 TTS 合成 → FFmpeg 零重编码合并为一段音频**。
+
+| 接口 | 入参 | 返回 |
+|------|------|------|
+| `/novel/analyze` | `text`（必填）、`roles` | `{ segments: [{ role, text, emotion }] }` |
+| `/novel/tts` | `segments`（必填数组）、`voice`/`speed`/`format`/`bitrate` | 音频文件 |
+| `/novel-tts` | `text`（必填）、`roles`、`voice`/`speed`/`format`/`bitrate` | 音频文件 |
+
+参数：`roles` 角色名数组（辅助识别）、`voice` 音色 id（默认取 `F5_TTS_VOICE`）、`speed` 语速（默认 1.0）、`format` 输出格式 mp3/wav/ogg/flac（默认 mp3）、`bitrate` mp3 目标码率 kbps（32~128）。
+
+限制：超长文本按 `NOVEL_MAX_TEXT_LENGTH` 截断，段落数受 `NOVEL_MAX_SEGMENTS` 限制，TTS 并发受 `NOVEL_MAX_CONCURRENCY` 限制。
 
 ## 目录结构
 
