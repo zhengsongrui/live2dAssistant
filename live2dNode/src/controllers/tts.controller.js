@@ -1,5 +1,11 @@
 import { synthesize } from "../services/tts/f5TtsService.js";
 import { synthesizeEmotion } from "../services/tts/emotionTtsService.js";
+import { ttsConfig } from "../config/tts.js";
+
+// 音色 id → 中文显示名 映射表（未映射的音色返回时 name 与 id 相同）
+const voiceNameMap = {
+  malele_3: "乐乐3",
+};
 
 /**
  * 处理 POST /tts 文本合成语音接口：
@@ -79,5 +85,30 @@ export async function handleTtsGet(req, res) {
   } catch (err) {
     console.error("TTS 合成失败:", err);
     res.status(500).send("TTS server error");
+  }
+}
+
+/**
+ * 处理 GET /voices 获取全部音色列表接口：
+ * 从 F5-TTS 服务端（ttsConfig.baseURL）的 /voices 接口转发
+ * 全部音色 id 及其参考音频路径（服务端解析 server/voices.yaml）
+ */
+export async function handleListVoices(req, res) {
+  try {
+    const resp = await fetch(`${ttsConfig.baseURL}/voices`, {
+      signal: AbortSignal.timeout(ttsConfig.timeout),
+    });
+    if (!resp.ok) throw new Error(`获取音色列表失败: ${resp.status} ${await resp.text()}`);
+    // 上游返回 { 音色id: 参考音频路径 }，此处转换为 [{ name, id }] 数组
+    // name 优先取 voiceNameMap 中的中文名，未映射的音色回退用原始 id
+    const voices = await resp.json();
+    const list = Object.entries(voices ?? {}).map(([id]) => ({
+      name: voiceNameMap[id] ?? id,
+      id,
+    }));
+    res.json(list);
+  } catch (err) {
+    console.error("获取音色列表失败:", err);
+    res.status(500).send("获取音色列表失败");
   }
 }

@@ -4,6 +4,7 @@ import {
   handleTtsGet,
   handleEmotionTts,
   handleEmotionTtsGet,
+  handleListVoices,
 } from "../controllers/tts.controller.js";
 
 const router = express.Router();
@@ -19,5 +20,8 @@ router.post("/emotion-tts", handleEmotionTts);
 
 // 浏览器测试接口，仅需 text 参数，其余使用默认值，如 /emotion-tts?text=今天天气真好
 router.get("/emotion-tts", handleEmotionTtsGet);
+
+// 获取全部音色列表接口：列出全部音色 id 及其参考音频路径（转发 F5-TTS 服务端）
+router.get("/voices", handleListVoices);
 
 export default router;

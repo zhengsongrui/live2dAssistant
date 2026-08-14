@@ -4,6 +4,7 @@ import asrRouter from "./routes/asr.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import ttsRouter from "./routes/tts.routes.js";
 import voiceRouter from "./routes/voice.routes.js";
+import novelRouter from "./routes/novel.routes.js";
 
 const app = express();
 
@@ -33,5 +34,6 @@ app.use(asrRouter);
 app.use(chatRouter);
 app.use(ttsRouter);
 app.use(voiceRouter);
+app.use(novelRouter);
 
 export default app;
