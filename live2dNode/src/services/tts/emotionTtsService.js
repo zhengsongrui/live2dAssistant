@@ -8,6 +8,8 @@
 // 注意：方式 2/3 生效时，方式 1 的 emo_audio_prompt 会被服务端自动忽略。
 import { ttsConfig } from "../../config/tts.js";
 import { numToChinese } from "../../utils/numToChinese.js";
+import { toSimplified } from "../../utils/toSimplified.js";
+import { replaceRareChars } from "../../utils/replaceRareChars.js";
 
 // 8 维情感向量各维度的含义（顺序固定，不可调换）
 // [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]
@@ -93,9 +95,12 @@ export async function synthesizeEmotion(
   } = {}
 ) {
   const outputFormat = format ?? ttsConfig.emotion.defaultFormat;
+  // 文本预处理：繁体 -> 简体，再生僻字 -> 同音字（IndexTTS2 无法识别繁体与生僻字）
+  const textCn = replaceRareChars(toSimplified(text));
+  const emoTextCn = emoText ? replaceRareChars(toSimplified(emoText)) : undefined;
   const body = {
     voice: voice ?? ttsConfig.voice,                // 说话人音色 id，见 voices.yaml（也支持文件路径）
-    text: numToChinese(text),                       // 数字转中文，避免读成英文
+    text: numToChinese(textCn),                     // 简体 + 数字转中文，避免读成英文
     speed: speed ?? 1,                              // 语速倍率，1 为原速（非 1 走后处理变速）
     remove_silence: removeSilence ?? ttsConfig.removeSilence, // 去掉首尾静音
     format: outputFormat,                           // wav / mp3 / ogg / flac
@@ -103,7 +108,7 @@ export async function synthesizeEmotion(
     ...(seed !== undefined && { seed }),            // 固定结果（可选）
 
     // ---- 情感控制（重点）----
-    ...buildEmotionBody({ emotionMode, emoAlpha, emoAudioPrompt, emoVector, emoText }),
+    ...buildEmotionBody({ emotionMode, emoAlpha, emoAudioPrompt, emoVector, emoText: emoTextCn }),
   };
   console.log(body)
   const res = await fetch(`${ttsConfig.baseURL}${ttsConfig.apiPath}`, {
