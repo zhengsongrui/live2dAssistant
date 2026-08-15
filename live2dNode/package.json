@@ -17,6 +17,7 @@
     "dotenv": "^17.2.3",
     "express": "^4.19.2",
     "node-fetch": "^3.3.2",
-    "openai": "^6.15.0"
+    "openai": "^6.15.0",
+    "opencc-js": "^1.4.1"
   }
 }
