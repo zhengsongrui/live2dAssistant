@@ -24,5 +24,7 @@ export const ttsConfig = {
     defaultFormat: process.env.F5_TTS_FORMAT || "mp3",
     // 仅 mp3 有效，目标码率 kbps（32~128）
     defaultBitrate: Number(process.env.F5_TTS_BITRATE || 64),
+    // 语气（情感）合成请求超时：推理链路较长，放宽到 5 分钟
+    timeout: 300000,
   },
 };

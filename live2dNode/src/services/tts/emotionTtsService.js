@@ -115,7 +115,8 @@ export async function synthesizeEmotion(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(ttsConfig.timeout),
+    // 语气合成推理链路较长，超时放宽到 5 分钟（见 ttsConfig.emotion.timeout）
+    signal: AbortSignal.timeout(ttsConfig.emotion.timeout),
   });
 
   if (!res.ok) throw new Error(`语气语音合成失败: ${res.status} ${await res.text()}`);
