@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 语音助手 · API 接口文档</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f6f8fa;
+      color: #24292f;
+      line-height: 1.65;
+    }
+    .container { max-width: 980px; margin: 0 auto; padding: 20px 20px 64px; }
+    header.hero {
+      background: linear-gradient(135deg, #1f6feb, #388bfd);
+      color: #fff;
+      border-radius: 14px;
+      padding: 30px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 6px 18px rgba(31, 111, 235, .25);
+    }
+    header.hero h1 { font-size: 26px; margin-bottom: 8px; }
+    header.hero p { opacity: .95; font-size: 14px; }
+    header.hero code {
+      background: rgba(255, 255, 255, .18);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+    .hero-sub { margin-top: 8px; font-size: 13px !important; opacity: .85 !important; }
+    h2 { font-size: 20px; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #eaecef; }
+    h3 { font-size: 15px; margin: 18px 0 8px; color: #1f6feb; }
+    .card {
+      background: #fff;
+      border: 1px solid #e1e4e8;
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+    }
+    .endpoint-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: .5px;
+    }
+    .badge-get { background: #2f9e44; }
+    .badge-post { background: #1971c2; }
+    .path {
+      font-family: ui-monospace, "Cascadia Code", Consolas, "Courier New", monospace;
+      font-size: 15px;
+      font-weight: 700;
+      color: #24292f;
+    }
+    .path::before { content: "http://localhost:8999"; color: #8b949e; font-weight: 400; font-size: 13px; margin-right: 2px; }
+    .endpoint-desc { font-size: 14px; color: #57606a; margin-bottom: 14px; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 13.5px; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eaecef; vertical-align: top; }
+    th { background: #f6f8fa; font-weight: 600; white-space: nowrap; }
+    td code { background: #eff1f3; padding: 1px 5px; border-radius: 4px; font-size: 12.5px; }
+    .req { color: #d1242f; font-weight: 600; }
+    .opt { color: #6e7681; }
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 14px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12.5px;
+      line-height: 1.55;
+      margin: 8px 0 14px;
+    }
+    pre code { font-family: ui-monospace, "Cascadia Code", Consolas, "Courier New", monospace; }
+    .label { font-size: 12px; font-weight: 700; color: #6e7681; text-transform: uppercase; letter-spacing: .5px; margin: 12px 0 4px; }
+    .resp { font-size: 13.5px; color: #57606a; margin: 4px 0 0; }
+    .resp code { background: #eff1f3; padding: 1px 5px; border-radius: 4px; }
+    .toc { columns: 2; column-gap: 24px; font-size: 14px; }
+    .toc a { color: #1f6feb; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .note {
+      background: #fff8c5;
+      border-left: 4px solid #d4a72c;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin: 10px 0;
+      color: #5b5400;
+    }
+    @media (max-width: 700px) {
+      .toc { columns: 1; }
+      .path::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header class="hero">
+      <h1>🎙️ AI 语音助手 · API 接口文档</h1>
+      <p>后端服务地址：<code id="baseUrl">http://localhost:8999</code></p>
+      <p class="hero-sub">分层模块化 Express 后端 · 本地 Whisper ASR · LLM 对话 · F5-TTS 语音合成 · 小说情感合成</p>
+    </header>
+
+    <section class="card">
+      <h2 style="margin-top:0;border-bottom:none;">📚 目录</h2>
+      <div class="toc">
+        <a href="#overview">接口一览</a><br/>
+        <a href="#basic">基础与健康检查（/ 、/test）</a><br/>
+        <a href="#text-chat">文字对话（/asrText）</a><br/>
+        <a href="#asr">语音识别对话（/asr）</a><br/>
+        <a href="#tts">文字合成语音（/tts）（暂不启用）</a><br/>
+        <a href="#emotion-tts">语气合成（/emotion-tts）</a><br/>
+        <a href="#voices">音色列表（/voices）</a><br/>
+        <a href="#chat-voice">文字对话并合成语音（/chatVoice）</a><br/>
+        <a href="#asr-voice">语音对话并合成语音（/asrVoice）</a><br/>
+        <a href="#novel">小说语音合成（/novel*）</a><br/>
+        <a href="#common">公共参数与约定</a>
+      </div>
+    </section>
+
+    <!-- 接口一览 -->
+    <h2 id="overview">📋 接口一览</h2>
+    <section class="card">
+      <table>
+        <thead>
+          <tr><th>方法</th><th>路径</th><th>说明</th><th>返回</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/</code></td><td>服务说明 / 本接口文档</td><td>HTML</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/test</code></td><td>健康检查</td><td>文本</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/asrText</code></td><td>文字 → LLM 回复</td><td>文本</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/asr</code></td><td>语音 → ASR → LLM 回复</td><td>文本</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/tts</code></td><td>文字合成语音（暂不启用）</td><td>mp3</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/tts</code></td><td>文字合成语音（浏览器测试）（暂不启用）</td><td>mp3</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/emotion-tts</code></td><td>语气（情感）合成语音</td><td>音频</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/emotion-tts</code></td><td>语气合成（浏览器测试）</td><td>音频</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/voices</code></td><td>获取全部音色列表</td><td>JSON</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/chatVoice</code></td><td>文字 → LLM 回复 → 语音</td><td>mp3</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/asrVoice</code></td><td>语音 → ASR → LLM 回复 → 语音</td><td>mp3</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/novelToTts</code></td><td>小说完整链路：分析 + 合成</td><td>音频</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/novel/analyze</code></td><td>小说情感 / 角色分析</td><td>JSON</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/novel/analyzeToTts</code></td><td>情感结果转语音（合并）</td><td>音频</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 基础与健康检查 -->
+    <h2 id="basic">🩺 基础与健康检查</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-get">GET</span>
+        <span class="path">/</span>
+      </div>
+      <p class="endpoint-desc">服务说明。返回当前这份 HTML 接口文档，网页直接访问根地址即可查看全部 API 示例。</p>
+      <div class="label">示例</div>
+      <pre><code># 浏览器访问
+http://localhost:8999/</code></pre>
+      <p class="resp">响应：<code>text/html</code> 接口文档页面</p>
+    </section>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-get">GET</span>
+        <span class="path">/test</span>
+      </div>
+      <p class="endpoint-desc">健康检查，确认服务是否在线。</p>
+      <div class="label">curl 示例</div>
+      <pre><code>curl http://localhost:8999/test</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/test");
+const text = await res.text();
+console.log(text); // 成功</code></pre>
+      <p class="resp">响应：<code>成功</code></p>
+    </section>
+
+    <!-- 文字对话 -->
+    <h2 id="text-chat">💬 文字对话</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-get">GET</span>
+        <span class="path">/asrText</span>
+      </div>
+      <p class="endpoint-desc">文字经大模型对话后返回回复文本（默认「你好」）。</p>
+      <h3>请求参数</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td><span class="opt">否</span></td><td><code>你好</code></td><td>要发送给大模型的文本</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl "http://localhost:8999/asrText?text=今天天气怎么样"</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/asrText?text=今天天气怎么样");
+const reply = await res.text();
+console.log(reply); // 大模型回复文本</code></pre>
+      <p class="resp">响应：纯文本，如 <code>今天天气很好，适合出门散步。</code></p>
+    </section>
+
+    <!-- 语音识别对话 -->
+    <h2 id="asr">🎤 语音识别对话</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-post">POST</span>
+        <span class="path">/asr</span>
+      </div>
+      <p class="endpoint-desc">上传原始音频（mp3），经本地 Whisper 识别后由大模型回复文本。</p>
+      <h3>请求参数</h3>
+      <table>
+        <thead><tr><th>参数</th><th>位置</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>Content-Type</code></td><td>Header</td><td><code>audio/mp3</code></td></tr>
+          <tr><td><code>body</code></td><td>Body</td><td>原始 mp3 二进制数据（≤100MB）</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl -X POST http://localhost:8999/asr \
+  -H "Content-Type: audio/mp3" \
+  --data-binary @speech.mp3</code></pre>
+      <div class="label">fetch 示例（audioBlob 为浏览器录制的 mp3 音频）</div>
+      <pre><code>const res = await fetch("/asr", {
+  method: "POST",
+  headers: { "Content-Type": "audio/mp3" },
+  body: audioBlob,
+});
+const reply = await res.text();
+console.log(reply); // 大模型回复文本</code></pre>
+      <p class="resp">响应：纯文本，如 <code>我在呢，有什么可以帮你的？</code></p>
+    </section>
+
+    <!-- 文字合成语音 -->
+    <h2 id="tts">🔊 文字合成语音（暂不启用）</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-post">POST</span>
+        <span class="path">/tts</span>
+      </div>
+      <p class="endpoint-desc">将文本合成为 mp3 语音。</p>
+      <h3>请求参数（Body JSON）</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td><span class="req">是</span></td><td>—</td><td>要合成的文本</td></tr>
+          <tr><td><code>voice</code></td><td>string</td><td><span class="opt">否</span></td><td><code>malele_3</code></td><td>F5-TTS 音色 id（见 <code>/voices</code>）</td></tr>
+          <tr><td><code>speed</code></td><td>number</td><td><span class="opt">否</span></td><td><code>1.0</code></td><td>语速</td></tr>
+          <tr><td><code>seed</code></td><td>number</td><td><span class="opt">否</span></td><td>—</td><td>固定合成结果（相同输入 + 种子 = 相同结果）</td></tr>
+          <tr><td><code>removeSilence</code></td><td>boolean</td><td><span class="opt">否</span></td><td><code>true</code></td><td>是否去除静音</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl -X POST http://localhost:8999/tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"你好世界","voice":"malele_3","speed":1.0}' \
+  --output out.mp3</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/tts", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: "你好世界", voice: "malele_3", speed: 1.0 }),
+});
+const blob = await res.blob();
+const url = URL.createObjectURL(blob);
+new Audio(url).play(); // 播放合成语音</code></pre>
+      <p class="resp">响应：<code>audio/mp3</code> 二进制音频</p>
+    </section>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-get">GET</span>
+        <span class="path">/tts</span>
+      </div>
+      <p class="endpoint-desc">浏览器测试接口，通过 URL 查询参数快速拿到 mp3，可直接在地址栏访问。</p>
+      <h3>请求参数（Query）</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td><span class="req">是</span></td><td>—</td><td>要合成的文本</td></tr>
+          <tr><td><code>voice</code></td><td>string</td><td><span class="opt">否</span></td><td><code>malele_3</code></td><td>音色 id</td></tr>
+          <tr><td><code>speed</code></td><td>number</td><td><span class="opt">否</span></td><td><code>1.0</code></td><td>语速</td></tr>
+          <tr><td><code>seed</code></td><td>number</td><td><span class="opt">否</span></td><td>—</td><td>固定结果</td></tr>
+          <tr><td><code>removeSilence</code></td><td>boolean</td><td><span class="opt">否</span></td><td><code>true</code></td><td>是否去静音</td></tr>
+        </tbody>
+      </table>
+      <div class="label">示例</div>
+      <pre><code>http://localhost:8999/tts?text=你好世界&voice=malele_3&speed=1</code></pre>
+      <p class="resp">响应：<code>audio/mp3</code> 二进制音频</p>
+    </section>
+
+    <!-- 语气合成 -->
+    <h2 id="emotion-tts">😊 语气（情感）语音合成</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-post">POST</span>
+        <span class="path">/emotion-tts</span>
+      </div>
+      <p class="endpoint-desc">支持三种情感控制方式（由 <code>emotionMode</code> 选择，互斥）：<br/>
+        ① <code>emotionMode=1</code> 参考音频情感（<code>emoAudioPrompt</code> 为音色 id 或路径）；<br/>
+        ② <code>emotionMode=2</code> 8 维情感向量（<code>emoVector</code>）；<br/>
+        ③ <code>emotionMode=3</code>（默认）文本情感，由大模型自动推断（<code>emoText</code> 为情感描述）。
+      </p>
+      <h3>请求参数（Body JSON）</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td><span class="req">是</span></td><td>—</td><td>要合成的文本</td></tr>
+          <tr><td><code>voice</code></td><td>string</td><td><span class="opt">否</span></td><td><code>malele_3</code></td><td>音色 id</td></tr>
+          <tr><td><code>speed</code></td><td>number</td><td><span class="opt">否</span></td><td><code>1.0</code></td><td>语速</td></tr>
+          <tr><td><code>seed</code></td><td>number</td><td><span class="opt">否</span></td><td>—</td><td>固定结果</td></tr>
+          <tr><td><code>removeSilence</code></td><td>boolean</td><td><span class="opt">否</span></td><td><code>true</code></td><td>是否去静音</td></tr>
+          <tr><td><code>format</code></td><td>string</td><td><span class="opt">否</span></td><td><code>mp3</code></td><td>音频格式：<code>wav/mp3/ogg/flac</code></td></tr>
+          <tr><td><code>bitrate</code></td><td>number</td><td><span class="opt">否</span></td><td><code>64</code></td><td>仅 mp3 有效，范围 32~128 kbps</td></tr>
+          <tr><td><code>emotionMode</code></td><td>number</td><td><span class="opt">否</span></td><td><code>3</code></td><td>情感控制方式：<code>1/2/3</code></td></tr>
+          <tr><td><code>emoAudioPrompt</code></td><td>string</td><td><span class="opt">否</span></td><td>—</td><td>方式 1：音色 id 或参考音频路径</td></tr>
+          <tr><td><code>emoAlpha</code></td><td>number</td><td><span class="opt">否</span></td><td><code>0.65</code></td><td>情感强度</td></tr>
+          <tr><td><code>emoVector</code></td><td>number[]</td><td><span class="opt">否</span></td><td>—</td><td>方式 2：8 维情感向量</td></tr>
+          <tr><td><code>emoText</code></td><td>string</td><td><span class="opt">否</span></td><td>—</td><td>方式 3：情感描述文本，如「开心地说」</td></tr>
+        </tbody>
+      </table>
+      <div class="note">8 维情感向量顺序：<code>[happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]</code></div>
+      <div class="label">curl 示例（方式 3 文本情感）</div>
+      <pre><code>curl -X POST http://localhost:8999/emotion-tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"今天天气真好，我们一起去公园散步吧。","emotionMode":3,"emoText":"开心地说"}' \
+  --output out.mp3</code></pre>
+      <div class="label">curl 示例（方式 2 情感向量）</div>
+      <pre><code>curl -X POST http://localhost:8999/emotion-tts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"今天天气真好。","emotionMode":2,"emoVector":[0,0,0,0,0,0,0,1],"emoAlpha":0.65}' \
+  --output out.mp3</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/emotion-tts", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    text: "今天天气真好，我们一起去公园散步吧。",
+    emotionMode: 3,
+    emoText: "开心地说",
+  }),
+});
+const blob = await res.blob();
+new Audio(URL.createObjectURL(blob)).play();</code></pre>
+      <p class="resp">响应：对应 <code>format</code> 的二进制音频</p>
+    </section>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-get">GET</span>
+        <span class="path">/emotion-tts</span>
+      </div>
+      <p class="endpoint-desc">浏览器测试接口，仅需 <code>text</code>，其余使用默认值。</p>
+      <div class="label">示例</div>
+      <pre><code>http://localhost:8999/emotion-tts?text=今天天气真好</code></pre>
+      <p class="resp">响应：<code>audio/mp3</code> 二进制音频</p>
+    </section>
+
+    <!-- 音色列表 -->
+    <h2 id="voices">🎛️ 音色列表</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-get">GET</span>
+        <span class="path">/voices</span>
+      </div>
+      <p class="endpoint-desc">获取全部音色 id 及其中文显示名（转发 F5-TTS 服务端 <code>voices.yaml</code>）。</p>
+      <div class="label">curl 示例</div>
+      <pre><code>curl http://localhost:8999/voices</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/voices");
+const voices = await res.json();
+console.log(voices); // [{ "name": "乐乐3", "id": "malele_3" }, ...]</code></pre>
+      <p class="resp">响应：JSON 数组 <code>[{ "name": "乐乐3", "id": "malele_3" }, ...]</code></p>
+    </section>
+
+    <!-- 文字对话并合成语音 -->
+    <h2 id="chat-voice">🎧 文字对话并合成语音</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-get">GET</span>
+        <span class="path">/chatVoice</span>
+      </div>
+      <p class="endpoint-desc">文字 → LLM 回复 → 合成语音，一步返回 mp3 音频。</p>
+      <h3>请求参数（Query）</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td><span class="opt">否</span></td><td><code>你好</code></td><td>要发送给大模型的文本</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl "http://localhost:8999/chatVoice?text=你好" --output out.mp3</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/chatVoice?text=你好");
+const blob = await res.blob();
+new Audio(URL.createObjectURL(blob)).play();</code></pre>
+      <p class="resp">响应：<code>audio/mp3</code> 二进制音频</p>
+    </section>
+
+    <!-- 语音对话并合成语音 -->
+    <h2 id="asr-voice">🎙️ 语音对话并合成语音</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-post">POST</span>
+        <span class="path">/asrVoice</span>
+      </div>
+      <p class="endpoint-desc">上传原始音频（mp3）→ Whisper 识别 → LLM 回复 → 合成语音，返回 mp3 音频。</p>
+      <h3>请求参数</h3>
+      <table>
+        <thead><tr><th>参数</th><th>位置</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>Content-Type</code></td><td>Header</td><td><code>audio/mp3</code></td></tr>
+          <tr><td><code>body</code></td><td>Body</td><td>原始 mp3 二进制数据（≤100MB）</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl -X POST http://localhost:8999/asrVoice \
+  -H "Content-Type: audio/mp3" \
+  --data-binary @speech.mp3 \
+  --output out.mp3</code></pre>
+      <div class="label">fetch 示例（audioBlob 为浏览器录制的 mp3 音频）</div>
+      <pre><code>const res = await fetch("/asrVoice", {
+  method: "POST",
+  headers: { "Content-Type": "audio/mp3" },
+  body: audioBlob,
+});
+const blob = await res.blob();
+new Audio(URL.createObjectURL(blob)).play();</code></pre>
+      <p class="resp">响应：<code>audio/mp3</code> 二进制音频</p>
+    </section>
+
+    <!-- 小说语音合成 -->
+    <h2 id="novel">📖 小说语音合成</h2>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-post">POST</span>
+        <span class="path">/novelToTts</span>
+      </div>
+      <p class="endpoint-desc">小说完整链路：小说文本 → LLM 角色/情感识别 → 分段情感 TTS → FFmpeg 合并，返回最终音频。</p>
+      <h3>请求参数（Body JSON）</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td><span class="req">是</span></td><td>—</td><td>小说文本（单次 ≤6000 字）</td></tr>
+          <tr><td><code>roles</code></td><td>string[]</td><td><span class="opt">否</span></td><td>—</td><td>角色名数组，辅助识别</td></tr>
+          <tr><td><code>voice</code></td><td>string</td><td><span class="opt">否</span></td><td><code>malele_3</code></td><td>音色 id</td></tr>
+          <tr><td><code>speed</code></td><td>number</td><td><span class="opt">否</span></td><td><code>1.0</code></td><td>语速</td></tr>
+          <tr><td><code>format</code></td><td>string</td><td><span class="opt">否</span></td><td><code>mp3</code></td><td>音频格式</td></tr>
+          <tr><td><code>bitrate</code></td><td>number</td><td><span class="opt">否</span></td><td><code>64</code></td><td>仅 mp3，32~128 kbps</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl -X POST http://localhost:8999/novelToTts \
+  -H "Content-Type: application/json" \
+  -d '{"text":"他推开门，激动地说：\"你终于回来了！\"","roles":["他"]}' \
+  --output novel.mp3</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/novelToTts", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: "他推开门，激动地说：你终于回来了！", roles: ["他"] }),
+});
+const blob = await res.blob();
+new Audio(URL.createObjectURL(blob)).play();</code></pre>
+      <p class="resp">响应：对应 <code>format</code> 的二进制音频</p>
+    </section>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-post">POST</span>
+        <span class="path">/novel/analyze</span>
+      </div>
+      <p class="endpoint-desc">小说情感/角色分析：返回 JSON <code>segments</code>，供查看或二次调用 <code>/novel/analyzeToTts</code>。</p>
+      <h3>请求参数（Body JSON）</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>text</code></td><td>string</td><td><span class="req">是</span></td><td>—</td><td>小说文本（单次 ≤6000 字）</td></tr>
+          <tr><td><code>roles</code></td><td>string[]</td><td><span class="opt">否</span></td><td>—</td><td>角色名数组，辅助识别</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl -X POST http://localhost:8999/novel/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"text":"他推开门，激动地说：你终于回来了！"}'</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/novel/analyze", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: "他推开门，激动地说：你终于回来了！", roles: ["他"] }),
+});
+const { segments } = await res.json();
+console.log(segments); // [{ "role": "旁白", "text": "他推开门，", "emotion": "平静地叙述" }, ...]</code></pre>
+      <p class="resp">响应：JSON，如 <code>{ "segments": [{ "role": "旁白", "text": "他推开门，", "emotion": "平静地叙述" }, { "role": "他", "text": "你终于回来了！", "emotion": "激动地说" }] }</code></p>
+    </section>
+
+    <section class="card">
+      <div class="endpoint-head">
+        <span class="badge badge-post">POST</span>
+        <span class="path">/novel/analyzeToTts</span>
+      </div>
+      <p class="endpoint-desc">将 <code>/novel/analyze</code> 返回的 segments 逐段合成并合并为最终音频。</p>
+      <h3>请求参数（Body JSON）</h3>
+      <table>
+        <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>segments</code></td><td>array</td><td><span class="req">是</span></td><td>—</td><td>分段数组，每项含 <code>role/text/emotion</code>（最多 20 段）</td></tr>
+          <tr><td><code>voice</code></td><td>string</td><td><span class="opt">否</span></td><td><code>malele_3</code></td><td>音色 id</td></tr>
+          <tr><td><code>speed</code></td><td>number</td><td><span class="opt">否</span></td><td><code>1.0</code></td><td>语速</td></tr>
+          <tr><td><code>format</code></td><td>string</td><td><span class="opt">否</span></td><td><code>mp3</code></td><td>音频格式</td></tr>
+          <tr><td><code>bitrate</code></td><td>number</td><td><span class="opt">否</span></td><td><code>64</code></td><td>仅 mp3，32~128 kbps</td></tr>
+        </tbody>
+      </table>
+      <div class="label">curl 示例</div>
+      <pre><code>curl -X POST http://localhost:8999/novel/analyzeToTts \
+  -H "Content-Type: application/json" \
+  -d '{"segments":[{"role":"旁白","text":"他推开门，","emotion":"平静地叙述"},{"role":"他","text":"你终于回来了！","emotion":"激动地说"}],"voice":"malele_3"}' \
+  --output novel.mp3</code></pre>
+      <div class="label">fetch 示例</div>
+      <pre><code>const res = await fetch("/novel/analyzeToTts", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    segments: [
+      { role: "旁白", text: "他推开门，", emotion: "平静地叙述" },
+      { role: "他", text: "你终于回来了！", emotion: "激动地说" },
+    ],
+    voice: "malele_3",
+  }),
+});
+const blob = await res.blob();
+new Audio(URL.createObjectURL(blob)).play();</code></pre>
+      <p class="resp">响应：对应 <code>format</code> 的二进制音频</p>
+    </section>
+
+    <!-- 公共参数与约定 -->
+    <h2 id="common">📐 公共参数与约定</h2>
+    <section class="card">
+      <table>
+        <tbody>
+          <tr><td><strong>基础地址</strong></td><td><code>http://localhost:8999</code>（端口可用 <code>PORT</code> 环境变量覆盖）</td></tr>
+          <tr><td><strong>音频接口失败</strong></td><td>返回 <code>4xx</code>/<code>500</code> 文本错误信息（如 <code>缺少 text 参数</code>、<code>TTS server error</code>）</td></tr>
+          <tr><td><strong>音色 voice</strong></td><td>F5-TTS 服务端 <code>voices.yaml</code> 中的音色 id，如 <code>malele_3</code>，可经 <code>/voices</code> 获取</td></tr>
+          <tr><td><strong>seed</strong></td><td>传数字可固定合成结果（相同输入 + 种子 = 相同结果）</td></tr>
+          <tr><td><strong>format</strong></td><td><code>wav / mp3 / ogg / flac</code>，默认 <code>mp3</code></td></tr>
+          <tr><td><strong>bitrate</strong></td><td>仅 <code>mp3</code> 有效，范围 <code>32~128</code> kbps，默认 <code>64</code></td></tr>
+          <tr><td><strong>文本长度限制</strong></td><td>小说接口单次输入上限 6000 字（<code>NOVEL_MAX_TEXT_LENGTH</code>），最多 20 段（<code>NOVEL_MAX_SEGMENTS</code>）</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <script>
+    // 动态显示当前服务地址（端口随环境自动适配，无需硬编码）
+    document.getElementById("baseUrl").textContent = window.location.origin;
+  </script>
+</body>
+</html>

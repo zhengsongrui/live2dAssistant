@@ -3,12 +3,13 @@
 - 基础地址：`http://localhost:8999`（端口可用 `PORT` 环境变量覆盖）
 - 所有请求体均为 `Content-Type: application/json`，除非另有说明
 - 音频接口响应为二进制音频（`Content-Type: audio/*`），其余为纯文本或 JSON
+- 访问 `http://localhost:8999/` 返回本接口文档（HTML），供网页开发者直接浏览与复制示例
 
 ## 接口一览
 
 | 方法 | 路径 | 说明 | 返回 |
 |------|------|------|------|
-| GET | `/` | 服务说明 | 文本 |
+| GET | `/` | 服务说明 / 接口文档 | HTML |
 | GET | `/test` | 健康检查 | 文本 |
 | POST | `/asr` | 语音→ASR→LLM 回复 | 文本 |
 | GET | `/asrText` | 文字→LLM 回复 | 文本 |
@@ -16,11 +17,12 @@
 | GET | `/tts` | 文字合成语音（浏览器测试） | mp3 |
 | POST | `/emotion-tts` | 语气（情感）合成语音 | 音频 |
 | GET | `/emotion-tts` | 语气合成（浏览器测试，默认参数） | 音频 |
+| GET | `/voices` | 获取全部音色列表 | JSON |
 | GET | `/chatVoice` | 文字→LLM 回复→语音 | mp3 |
 | POST | `/asrVoice` | 语音→ASR→LLM 回复→语音 | mp3 |
-| POST | `/novel-tts` | 小说完整链路：分析+合成 | 音频 |
+| POST | `/novelToTts` | 小说完整链路：分析+合成 | 音频 |
 | POST | `/novel/analyze` | 小说情感/角色分析 | JSON |
-| POST | `/novel/tts` | 情感结果转语音（合并） | 音频 |
+| POST | `/novel/analyzeToTts` | 情感结果转语音（合并） | 音频 |
 
 ---
 
@@ -134,6 +136,19 @@ http://localhost:8999/tts?text=你好世界&voice=malele_3&speed=1
 http://localhost:8999/emotion-tts?text=今天天气真好
 ```
 
+### GET /voices（获取音色列表）
+列出全部音色 id 及其中文显示名（转发 F5-TTS 服务端 `voices.yaml`）。
+
+```bash
+curl http://localhost:8999/voices
+```
+
+**响应**：
+
+```json
+[{ "name": "乐乐3", "id": "malele_3" }]
+```
+
 ---
 
 ## 5. 文字对话并语音合成
@@ -166,7 +181,7 @@ curl -X POST http://localhost:8999/asrVoice \
 
 ## 7. 小说语音合成
 
-### POST /novel-tts（完整链路）
+### POST /novelToTts（完整链路）
 小说文本→LLM 角色/情感识别→分段情感 TTS→FFmpeg 合并，返回最终音频。
 
 ```json
@@ -183,7 +198,7 @@ curl -X POST http://localhost:8999/asrVoice \
 **响应**：对应格式的二进制音频。
 
 ### POST /novel/analyze（情感分析）
-返回 JSON `segments`，供查看或二次调用 `/novel/tts`。
+返回 JSON `segments`，供查看或二次调用 `/novel/analyzeToTts`。
 
 ```json
 {
@@ -209,7 +224,7 @@ curl -X POST http://localhost:8999/novel/analyze \
 }
 ```
 
-### POST /novel/tts（情感结果转语音）
+### POST /novel/analyzeToTts（情感结果转语音）
 将 `/novel/analyze` 返回的 segments 逐段合成并合并为最终音频。
 
 ```json

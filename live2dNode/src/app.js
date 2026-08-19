@@ -1,3 +1,5 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import express from "express";
 import cors from "cors";
 import asrRouter from "./routes/asr.routes.js";
@@ -5,6 +7,8 @@ import chatRouter from "./routes/chat.routes.js";
 import ttsRouter from "./routes/tts.routes.js";
 import voiceRouter from "./routes/voice.routes.js";
 import novelRouter from "./routes/novel.routes.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
@@ -24,9 +28,9 @@ app.use(express.raw({ type: "audio/mp3", limit: "100mb" }));
 // 解析 JSON 请求体
 app.use(express.json());
 
-// 根路由：返回服务说明文本
+// 根路由：返回自包含 HTML 的 API 接口文档页（供网页开发者浏览示例）
 app.get("/", (req, res) => {
-  res.type("text/plain").send("AI 语音助手后端服务已启动，欢迎使用！");
+  res.sendFile(path.join(__dirname, "public", "api-doc.html"));
 });
 
 // 挂载路由
