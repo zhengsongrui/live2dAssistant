@@ -18,14 +18,15 @@ const OUT_DIR = path.join(__dirname, "out");
 
 // 测试文本：约 50 字、4 个说话者（旁白 + 林澈 + 苏晚 + 老者）
 // 注意：说话引导语（"冷声道""啜泣""叹气"等）必须保留在 text 中，不得丢弃
+// 情感采用 8 维向量 emoVector：[happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]
 const NOVEL_SEGMENTS = [
-  { role: "旁白", text: "林澈推门而入，冷声道：", emotion: "平静地叙述" },
-  { role: "林澈", text: "苏晚，你终于来了。", emotion: "冷冷地说" },
-  { role: "旁白", text: "苏晚啜泣：", emotion: "平静地叙述" },
-  { role: "苏晚", text: "我等了你三年。", emotion: "啜泣着说" },
-  { role: "旁白", text: "老者叹气：", emotion: "平静地叙述" },
-  { role: "老者", text: "罢了，都走吧。", emotion: "叹气说道" },
-  { role: "旁白", text: "烛火忽明忽暗。", emotion: "低沉地叙述" },
+  { role: "旁白", text: "林澈推门而入，冷声道：", emoVector: [0, 0, 0, 0, 0, 0, 0, 1] },
+  { role: "林澈", text: "苏晚，你终于来了。", emoVector: [0, 0.8, 0, 0, 0, 0, 0, 0.2] },
+  { role: "旁白", text: "苏晚啜泣：", emoVector: [0, 0, 0, 0, 0, 0, 0, 1] },
+  { role: "苏晚", text: "我等了你三年。", emoVector: [0, 0, 0.9, 0, 0, 0.4, 0, 0.1] },
+  { role: "旁白", text: "老者叹气：", emoVector: [0, 0, 0, 0, 0, 0, 0, 1] },
+  { role: "老者", text: "罢了，都走吧。", emoVector: [0, 0, 0.4, 0, 0, 0.7, 0, 0.3] },
+  { role: "旁白", text: "烛火忽明忽暗。", emoVector: [0, 0, 0.5, 0, 0, 0.6, 0, 0.2] },
 ];
 
 /** 根据 Content-Type 推断音频扩展名 */

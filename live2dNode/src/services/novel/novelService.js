@@ -1,6 +1,8 @@
 // 小说 -> 角色化/情感化语音 合成服务
+// 情感识别采用 8 维情感向量 [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]，
+// 由 LLM 逐段输出 emoVector，TTS 使用方式 2（情感向量，见 emotionTtsService.js）。
 // 提供三个能力：
-//   1) analyzeSegments：LLM 情感/角色识别分段，返回 JSON segments（情感分析接口用）
+//   1) analyzeSegments：LLM 角色识别 + 8 维情感向量识别分段，返回 JSON segments（情感分析接口用）
 //   2) synthesizeSegments：将 segments 逐段情感 TTS 合成 + FFmpeg 合并（情感结果转语音接口用）
 //   3) synthesizeNovel：完整链路 = 分析 + 合成（保留原 /novel-tts）
 import { execFile } from "child_process";
@@ -34,22 +36,23 @@ function parseSegments(raw) {
 }
 
 /**
- * LLM 情感/角色识别分段：输入小说文本，输出 [{ role, text, emotion }]
+ * LLM 角色识别 + 8 维情感向量识别分段：输入小说文本，输出 [{ role, text, emoVector }]
  */
 async function splitSegments(text, roles) {
   const roleHint = Array.isArray(roles) && roles.length ? `可识别的角色有：${roles.join("、")}。` : "";
   const prompt = `你是小说音频书的分段专家。请把下面小说文本切分为适合语音合成的若干段，识别每段说话角色与情感。
 要求：
 1. 严格只输出一个 JSON 对象，不要任何其它文字、解释或 Markdown 代码块。
-2. 格式：{"segments":[{"role":"角色名","text":"段落文本","emotion":"情感描述"}]}
-3. role 为说话人，叙述部分用"旁白"；emotion 为简短中文情感描述，如"平静地叙述""兴奋地说""低沉悲伤地说"。
-4. 每段 text 控制在 200 字以内、语义完整，段落数量尽量少。
-5. 【硬性要求，违反即为错误】只允许"切分"，禁止删减、改写、概括：所有段落 text 按顺序拼接后必须与原文一字不差，包括"冷声道""啜泣""叹气"等说话引导语以及冒号、引号、感叹号等标点。原文的每一个字都必须出现在某一段的 text 中。说话引导语（如"苏晚啜泣""老者叹气"）必须并入对应台词段或旁白段保留，绝不允许丢弃。
+2. 格式：{"segments":[{"role":"角色名","text":"段落文本","emoVector":[0,0,0,0,0,0,0,1]}]}
+3. role 为说话人，叙述部分用"旁白"；emoVector 为该段情感的 8 维向量，各维度含义（顺序固定，不可调换）为 [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]，每项取值 0~1，数值越大该情感越强烈，一般最高取值0.5，超过0.5语气会过去强烈。
+4. 常见情感参考：平静/旁白=[0,0,0,0,0,0,0,0.2]；冷冷地/愤怒=[0,0.4,0,0,0,0,0,0.2]；啜泣/悲伤=[0,0,0.9,0,0,0.3,0,0.1]；叹气/无奈=[0,0,0.4,0,0,0.5,0,0.2]；激动/兴奋=[0.9,0,0,0,0,0,0.4,0.1]。请结合说话引导语（"冷声道""啜泣""叹气"等）与台词内容综合判断，不得省略任何一维。
+5. 每段 text 控制在 200 字以内、语义完整，段落数量尽量少。
+6. 【硬性要求，违反即为错误】只允许"切分"，禁止删减、改写、概括：所有段落 text 按顺序拼接后必须与原文一字不差，包括"冷声道""啜泣""叹气"等说话引导语以及冒号、引号、感叹号等标点。原文的每一个字都必须出现在某一段的 text 中。说话引导语（如"苏晚啜泣""老者叹气"）必须并入对应台词段或旁白段保留，绝不允许丢弃。
 
 示例：
 输入：他冷冷地说：“你走吧。”
-合法输出：{"segments":[{"role":"他","text":"他冷冷地说：“你走吧。”","emotion":"冷冷地说"}]}
-非法输出：{"segments":[{"role":"他","text":"你走吧。","emotion":"冷冷地说"}]}（丢失了"他冷冷地说"，判错）
+合法输出：{"segments":[{"role":"他","text":"他冷冷地说：“你走吧。”","emoVector":[0,0.8,0,0,0,0,0,0.2]}]}
+非法输出：{"segments":[{"role":"他","text":"你走吧。","emoVector":[0,0.8,0,0,0,0,0,0.2]}]}（丢失了"他冷冷地说"，判错）
 
 ${roleHint}
 小说文本：
@@ -65,7 +68,19 @@ ${roleHint}
 }
 
 /**
+ * 校验并规整 8 维情感向量 [happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]
+ * 非 8 位数字数组则回退默认向量（calm=1）；各维数值钳制到 0~1。
+ * @param {unknown} v 原始向量（可能来自 LLM 或外部调用）
+ * @returns {number[]} 规整后的 8 维向量
+ */
+function normalizeEmoVector(v) {
+  const valid = Array.isArray(v) && v.length === 8 && v.every((n) => typeof n === "number" && Number.isFinite(n));
+  return (valid ? v : ttsConfig.emotion.defaultVector).map((n) => Math.min(1, Math.max(0, n)));
+}
+
+/**
  * 校验并规整 segments（过滤空段、补齐默认字段、限制段数）
+ * 每段含 role / text / emoVector（8 维情感向量）
  */
 function normalizeSegments(segments) {
   const list = (Array.isArray(segments) ? segments : [])
@@ -74,7 +89,7 @@ function normalizeSegments(segments) {
   return list.map((s) => ({
     role: String(s.role ?? "旁白"),
     text: String(s.text).trim(),
-    emotion: String(s.emotion ?? "平静地叙述"),
+    emoVector: normalizeEmoVector(s.emoVector),
   }));
 }
 
@@ -91,8 +106,8 @@ function norm(s) {
  * 这里用原文对各段文本做贪心子序列匹配，把未被任何段覆盖的原文片段找回，
  * 作为新的旁白段插入对应位置，保证"切分不删减、原文逐字保留"。
  * @param {string} clean 清洗后的原文
- * @param {Array<{role,text,emotion}>} segments 规整后的分段
- * @returns {Array<{role,text,emotion}>} 补齐引导语后的分段
+ * @param {Array<{role,text,emoVector}>} segments 规整后的分段
+ * @returns {Array<{role,text,emoVector}>} 补齐引导语后的分段
  */
 function repairLostText(clean, segments) {
   // 建立 归一化原文 与 clean 原文 的字符索引映射
@@ -150,7 +165,8 @@ function repairLostText(clean, segments) {
         break;
       }
     }
-    result.splice(pos, 0, { role: "旁白", text, emotion: "平静地叙述" });
+    // 补齐的旁白段使用默认向量（calm=1：自然、平静）
+    result.splice(pos, 0, { role: "旁白", text, emoVector: ttsConfig.emotion.defaultVector });
     offset += 1;
   }
   return result;
@@ -177,10 +193,10 @@ async function mapWithConcurrency(items, limit, fn) {
 }
 
 /**
- * 1. 情感/角色分析：小说文本 -> JSON segments
+ * 1. 角色识别 + 8 维情感向量分析：小说文本 -> JSON segments
  * @param {string} text 小说文本（必填）
  * @param {object} [options] roles 角色名数组（辅助识别）
- * @returns {Promise<Array<{ role: string, text: string, emotion: string }>>}
+ * @returns {Promise<Array<{ role: string, text: string, emoVector: number[] }>>}
  */
 export async function analyzeSegments(text, options = {}) {
   const clean = cleanOutput(text).slice(0, novelConfig.maxTextLength);
@@ -193,8 +209,8 @@ export async function analyzeSegments(text, options = {}) {
 }
 
 /**
- * 2. 情感结果转语音：JSON segments -> 逐段情感 TTS -> FFmpeg 合并 -> 最终音频
- * @param {Array<{ role, text, emotion }>} segments 情感分析结果
+ * 2. 情感结果转语音：JSON segments -> 逐段情感 TTS（8 维情感向量）-> FFmpeg 合并 -> 最终音频
+ * @param {Array<{ role, text, emoVector }>} segments 情感分析结果（每段含 8 维情感向量）
  * @param {object} [options] voice 音色 / speed 语速 / format 输出格式 / bitrate 码率
  * @returns {Promise<{ audio: Buffer, format: string, contentType: string }>}
  */
@@ -212,8 +228,8 @@ export async function synthesizeSegments(segments, options = {}) {
         speed,
         format,
         bitrate,
-        emotionMode: 3, // 方式 3：文本情感，直接使用 segments 中的情感描述
-        emoText: seg.emotion,
+        emotionMode: 2, // 方式 2：8 维情感向量，直接使用 segments 中的 emoVector
+        emoVector: seg.emoVector,
       })
     );
 

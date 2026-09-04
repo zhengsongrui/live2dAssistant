@@ -59,7 +59,13 @@ async function main() {
       for (const seg of data.segments) {
         assert.equal(typeof seg.role, "string", "每段须包含 role 字段");
         assert.equal(typeof seg.text, "string", "每段须包含 text 字段");
-        assert.equal(typeof seg.emotion, "string", "每段须包含 emotion 字段");
+        // 每段须包含 8 维情感向量 emoVector（各维为 0~1 的数字）
+        assert.ok(Array.isArray(seg.emoVector), "每段须包含 emoVector 数组");
+        assert.equal(seg.emoVector.length, 8, "emoVector 应为 8 维");
+        for (const n of seg.emoVector) {
+          assert.equal(typeof n, "number", "emoVector 各维应为数字");
+          assert.ok(Number.isFinite(n) && n >= 0 && n <= 1, "emoVector 各维应在 0~1 之间");
+        }
       }
       // 多角色校验：去重后的角色数应至少为 2（旁白 + 至少一个具名角色）
       const roles = [...new Set(data.segments.map((s) => s.role))];

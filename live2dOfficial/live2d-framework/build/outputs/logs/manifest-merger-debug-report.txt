@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml:2:13-83
+INJECTED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml:2:13-83
+	package
+		INJECTED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml
+	xmlns:android
+		ADDED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml:2:23-81
+uses-sdk
+INJECTED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml reason: use-sdk injection requested
+INJECTED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml
+INJECTED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml
+	android:targetSdkVersion
+		INJECTED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml
+	android:minSdkVersion
+		INJECTED from D:\CODING\AAAMyProject\live2dAssistant\live2dOfficial\live2d-framework\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest11569293061193311177.xml
