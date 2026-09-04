@@ -134,8 +134,8 @@
         <tbody>
           <tr><td><span class="badge badge-get">GET</span></td><td><code>/</code></td><td>服务说明 / 本接口文档</td><td>HTML</td></tr>
           <tr><td><span class="badge badge-get">GET</span></td><td><code>/test</code></td><td>健康检查</td><td>文本</td></tr>
-          <tr><td><span class="badge badge-get">GET</span></td><td><code>/asrText</code></td><td>文字 → LLM 回复</td><td>文本</td></tr>
-          <tr><td><span class="badge badge-post">POST</span></td><td><code>/asr</code></td><td>语音 → ASR → LLM 回复</td><td>文本</td></tr>
+          <tr><td><span class="badge badge-get">GET</span></td><td><code>/asrText</code></td><td>文字 → LLM 回复（支持流式）</td><td>文本/SSE</td></tr>
+          <tr><td><span class="badge badge-post">POST</span></td><td><code>/asr</code></td><td>语音 → ASR → LLM 回复（支持流式）</td><td>文本/SSE</td></tr>
           <tr><td><span class="badge badge-post">POST</span></td><td><code>/tts</code></td><td>文字合成语音（暂不启用）</td><td>mp3</td></tr>
           <tr><td><span class="badge badge-get">GET</span></td><td><code>/tts</code></td><td>文字合成语音（浏览器测试）（暂不启用）</td><td>mp3</td></tr>
           <tr><td><span class="badge badge-post">POST</span></td><td><code>/emotion-tts</code></td><td>语气（情感）合成语音</td><td>音频</td></tr>
@@ -188,21 +188,26 @@ console.log(text); // 成功</code></pre>
         <span class="badge badge-get">GET</span>
         <span class="path">/asrText</span>
       </div>
-      <p class="endpoint-desc">文字经大模型对话后返回回复文本（默认「你好」）。</p>
+      <p class="endpoint-desc">文字经大模型对话后返回回复文本（默认「你好」）。支持 <code>chatStream=true</code> 时 SSE 流式输出。</p>
       <h3>请求参数</h3>
       <table>
         <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
         <tbody>
           <tr><td><code>text</code></td><td>string</td><td><span class="opt">否</span></td><td><code>你好</code></td><td>要发送给大模型的文本</td></tr>
+          <tr><td><code>chatStream</code></td><td>boolean</td><td><span class="opt">否</span></td><td><code>false</code></td><td>置为 <code>true</code> 开启 SSE 流式输出</td></tr>
         </tbody>
       </table>
       <div class="label">curl 示例</div>
-      <pre><code>curl "http://localhost:8999/asrText?text=今天天气怎么样"</code></pre>
-      <div class="label">fetch 示例</div>
+      <pre><code>curl "http://localhost:8999/asrText?text=今天天气怎么样"
+curl "http://localhost:8999/asrText?text=今天天气怎么样&chatStream=true"</code></pre>
+      <div class="label">fetch 示例（非流式）</div>
       <pre><code>const res = await fetch("/asrText?text=今天天气怎么样");
 const reply = await res.text();
 console.log(reply); // 大模型回复文本</code></pre>
-      <p class="resp">响应：纯文本，如 <code>今天天气很好，适合出门散步。</code></p>
+      <div class="label">fetch 示例（流式 SSE）</div>
+      <pre><code>const res = await fetch("/asrText?text=今天天气怎么样&chatStream=true");
+const reader = res.body.getReader(); // 逐块读取 data 消息，实现打字机效果</code></pre>
+      <p class="resp">非流式响应：纯文本，如 <code>今天天气很好，适合出门散步。</code>；流式响应：<code>text/event-stream</code>，每条 <code>data: {"content":"..."}</code>，结束为 <code>data: {"done":true}</code>。</p>
     </section>
 
     <!-- 语音识别对话 -->
@@ -213,17 +218,22 @@ console.log(reply); // 大模型回复文本</code></pre>
         <span class="badge badge-post">POST</span>
         <span class="path">/asr</span>
       </div>
-      <p class="endpoint-desc">上传原始音频（mp3），经本地 Whisper 识别后由大模型回复文本。</p>
+      <p class="endpoint-desc">上传原始音频（mp3），经本地 Whisper 识别后由大模型回复文本。支持 <code>?chatStream=true</code> 时 SSE 流式输出。</p>
       <h3>请求参数</h3>
       <table>
         <thead><tr><th>参数</th><th>位置</th><th>说明</th></tr></thead>
         <tbody>
           <tr><td><code>Content-Type</code></td><td>Header</td><td><code>audio/mp3</code></td></tr>
           <tr><td><code>body</code></td><td>Body</td><td>原始 mp3 二进制数据（≤100MB）</td></tr>
+          <tr><td><code>chatStream</code></td><td>Query</td><td>置为 <code>true</code> 开启 SSE 流式输出（请求体为音频，参数只能走 query）</td></tr>
         </tbody>
       </table>
       <div class="label">curl 示例</div>
       <pre><code>curl -X POST http://localhost:8999/asr \
+  -H "Content-Type: audio/mp3" \
+  --data-binary @speech.mp3
+
+curl -X POST "http://localhost:8999/asr?chatStream=true" \
   -H "Content-Type: audio/mp3" \
   --data-binary @speech.mp3</code></pre>
       <div class="label">fetch 示例（audioBlob 为浏览器录制的 mp3 音频）</div>
@@ -234,7 +244,7 @@ console.log(reply); // 大模型回复文本</code></pre>
 });
 const reply = await res.text();
 console.log(reply); // 大模型回复文本</code></pre>
-      <p class="resp">响应：纯文本，如 <code>我在呢，有什么可以帮你的？</code></p>
+      <p class="resp">非流式响应：纯文本，如 <code>我在呢，有什么可以帮你的？</code>；流式响应：<code>text/event-stream</code>，格式同 <code>/asrText</code>。</p>
     </section>
 
     <!-- 文字合成语音 -->
@@ -482,7 +492,7 @@ new Audio(URL.createObjectURL(blob)).play();</code></pre>
         <span class="badge badge-post">POST</span>
         <span class="path">/novel/analyze</span>
       </div>
-      <p class="endpoint-desc">小说情感/角色分析：返回 JSON <code>segments</code>，供查看或二次调用 <code>/novel/analyzeToTts</code>。</p>
+      <p class="endpoint-desc">小说角色识别 + 8 维情感向量分析：返回 JSON <code>segments</code>（每段含 <code>emoVector</code>，顺序 <code>[happy, angry, sad, afraid, disgusted, melancholic, surprised, calm]</code>，各维 0~1），供查看或二次调用 <code>/novel/analyzeToTts</code>。</p>
       <h3>请求参数（Body JSON）</h3>
       <table>
         <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
@@ -502,8 +512,8 @@ new Audio(URL.createObjectURL(blob)).play();</code></pre>
   body: JSON.stringify({ text: "他推开门，激动地说：你终于回来了！", roles: ["他"] }),
 });
 const { segments } = await res.json();
-console.log(segments); // [{ "role": "旁白", "text": "他推开门，", "emotion": "平静地叙述" }, ...]</code></pre>
-      <p class="resp">响应：JSON，如 <code>{ "segments": [{ "role": "旁白", "text": "他推开门，", "emotion": "平静地叙述" }, { "role": "他", "text": "你终于回来了！", "emotion": "激动地说" }] }</code></p>
+console.log(segments); // [{ "role": "旁白", "text": "他推开门，", "emoVector": [0,0,0,0,0,0,0,1] }, ...]</code></pre>
+      <p class="resp">响应：JSON，如 <code>{ "segments": [{ "role": "旁白", "text": "他推开门，", "emoVector": [0,0,0,0,0,0,0,1] }, { "role": "他", "text": "你终于回来了！", "emoVector": [0.9,0,0,0,0,0,0.4,0.1] }] }</code></p>
     </section>
 
     <section class="card">
@@ -511,12 +521,12 @@ console.log(segments); // [{ "role": "旁白", "text": "他推开门，", "emoti
         <span class="badge badge-post">POST</span>
         <span class="path">/novel/analyzeToTts</span>
       </div>
-      <p class="endpoint-desc">将 <code>/novel/analyze</code> 返回的 segments 逐段合成并合并为最终音频。</p>
+      <p class="endpoint-desc">将 <code>/novel/analyze</code> 返回的 segments 逐段合成并合并为最终音频（各段按 8 维情感向量 <code>emoVector</code> 合成）。</p>
       <h3>请求参数（Body JSON）</h3>
       <table>
         <thead><tr><th>参数</th><th>类型</th><th>必填</th><th>默认</th><th>说明</th></tr></thead>
         <tbody>
-          <tr><td><code>segments</code></td><td>array</td><td><span class="req">是</span></td><td>—</td><td>分段数组，每项含 <code>role/text/emotion</code>（最多 20 段）</td></tr>
+          <tr><td><code>segments</code></td><td>array</td><td><span class="req">是</span></td><td>—</td><td>分段数组，每项含 <code>role/text/emoVector</code>（最多 20 段）</td></tr>
           <tr><td><code>voice</code></td><td>string</td><td><span class="opt">否</span></td><td><code>malele_3</code></td><td>音色 id</td></tr>
           <tr><td><code>speed</code></td><td>number</td><td><span class="opt">否</span></td><td><code>1.0</code></td><td>语速</td></tr>
           <tr><td><code>format</code></td><td>string</td><td><span class="opt">否</span></td><td><code>mp3</code></td><td>音频格式</td></tr>
@@ -526,7 +536,7 @@ console.log(segments); // [{ "role": "旁白", "text": "他推开门，", "emoti
       <div class="label">curl 示例</div>
       <pre><code>curl -X POST http://localhost:8999/novel/analyzeToTts \
   -H "Content-Type: application/json" \
-  -d '{"segments":[{"role":"旁白","text":"他推开门，","emotion":"平静地叙述"},{"role":"他","text":"你终于回来了！","emotion":"激动地说"}],"voice":"malele_3"}' \
+  -d '{"segments":[{"role":"旁白","text":"他推开门，","emoVector":[0,0,0,0,0,0,0,1]},{"role":"他","text":"你终于回来了！","emoVector":[0.9,0,0,0,0,0,0.4,0.1]}],"voice":"malele_3"}' \
   --output novel.mp3</code></pre>
       <div class="label">fetch 示例</div>
       <pre><code>const res = await fetch("/novel/analyzeToTts", {
@@ -534,8 +544,8 @@ console.log(segments); // [{ "role": "旁白", "text": "他推开门，", "emoti
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     segments: [
-      { role: "旁白", text: "他推开门，", emotion: "平静地叙述" },
-      { role: "他", text: "你终于回来了！", emotion: "激动地说" },
+      { role: "旁白", text: "他推开门，", emoVector: [0, 0, 0, 0, 0, 0, 0, 1] },
+      { role: "他", text: "你终于回来了！", emoVector: [0.9, 0, 0, 0, 0, 0, 0.4, 0.1] },
     ],
     voice: "malele_3",
   }),

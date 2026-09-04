@@ -33,7 +33,7 @@ export async function handleNovelTts(req, res) {
 
 /**
  * 处理 POST /novel/analyze 情感分析接口：
- * 小说文本（text）+ 可选 roles -> LLM 角色/情感识别，返回 JSON segments。
+ * 小说文本（text）+ 可选 roles -> LLM 角色识别 + 8 维情感向量识别，返回 JSON segments（每段含 emoVector）。
  */
 export async function handleNovelAnalyze(req, res) {
   const { text, ...opts } = req.body ?? {};
@@ -47,7 +47,8 @@ export async function handleNovelAnalyze(req, res) {
 
 /**
  * 处理 POST /novel/tts 情感分析结果转语音接口：
- * JSON segments 数组 + 可选参数（voice/speed/format/bitrate）-> 分段情感 TTS -> FFmpeg 合并，返回最终音频。
+ * JSON segments 数组（每段含 8 维情感向量 emoVector）+ 可选参数（voice/speed/format/bitrate）
+ * -> 分段情感 TTS -> FFmpeg 合并，返回最终音频。
  */
 export async function handleNovelSegmentsTts(req, res) {
   const { segments, ...opts } = req.body ?? {};
